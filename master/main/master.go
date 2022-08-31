@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/luoruofeng/gobasicproj/master"
+	"github.com/luoruofeng/gobasicproj/master/task_srv/etcd"
 )
 
 func main() {
@@ -14,14 +15,17 @@ func main() {
 
 	err := master.InitConfig(master.ConfigPath)
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		panicAndExit(err)
+	}
+
+	err = etcd.InitEtcdTaskSrv()
+	if err != nil {
+		panicAndExit(err)
 	}
 
 	err = master.InitApiSever()
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		panicAndExit(err)
 	} else {
 		log.Println("API server is running...")
 	}
@@ -44,4 +48,10 @@ func DeleteFiles() {
 	log.Println("- Run Clean Up - Delete some File")
 	// _ = os.Remove(something)
 	log.Println("- Good bye!")
+}
+
+func panicAndExit(err error) {
+	DeleteFiles()
+	log.Fatal(err)
+	os.Exit(1)
 }
