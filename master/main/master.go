@@ -7,13 +7,14 @@ import (
 	"syscall"
 
 	"github.com/luoruofeng/gobasicproj/master"
+	c "github.com/luoruofeng/gobasicproj/master/config"
 	"github.com/luoruofeng/gobasicproj/master/task_srv/etcd"
 )
 
 func main() {
 	master.InitFlag()
 
-	err := master.InitConfig(master.ConfigPath)
+	err := c.InitConfig(master.ConfigPath)
 	if err != nil {
 		panicAndExit(err)
 	}

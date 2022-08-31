@@ -7,8 +7,9 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/luoruofeng/gobasicproj/common"
-	"github.com/luoruofeng/gobasicproj/master"
+	c "github.com/luoruofeng/gobasicproj/master/config"
 	"github.com/luoruofeng/gobasicproj/master/task_srv"
 	"go.etcd.io/etcd/clientv3"
 )
@@ -35,8 +36,8 @@ func InitEtcdTaskSrv() error {
 
 	// 初始化配置
 	config = clientv3.Config{
-		Endpoints:   master.Cnf.EtcdAddrs,                                         // 集群地址
-		DialTimeout: time.Duration(master.Cnf.EtcdDialTimeout) * time.Millisecond, // 连接超时
+		Endpoints:   c.Cnf.EtcdAddrs,                                         // 集群地址
+		DialTimeout: time.Duration(c.Cnf.EtcdDialTimeout) * time.Millisecond, // 连接超时
 	}
 
 	// 建立连接
@@ -92,8 +93,30 @@ func (t *TaskSrv) SaveTask(task *task_srv.Task) (oldTask *task_srv.Task, err err
 	return
 }
 
+// 获取全部任务
+func (t *TaskSrv) GetAllTask() (allTask []*task_srv.Task, err error) {
+	var (
+		getResp *clientv3.GetResponse
+		kvPair  *mvccpb.KeyValue
+		task    *task_srv.Task
+	)
+	if getResp, err = t.kv.Get(context.TODO(), common.TaskSaveDir, clientv3.WithPrefix()); err != nil {
+		return
+	}
+	allTask = make([]*task_srv.Task, 0)
+	for _, kvPair = range getResp.Kvs {
+		task = &task_srv.Task{}
+		if err = json.Unmarshal(kvPair.Value, task); err != nil {
+			err = nil
+			continue
+		}
+		allTask = append(allTask, task)
+	}
+	return
+}
+
 // 删除任务
-func (t *TaskSrv) DeleteJob(id uint64) (oldTask *task_srv.Task, err error) {
+func (t *TaskSrv) DeleteTask(id uint64) (oldTask *task_srv.Task, err error) {
 	var (
 		taskKey    string
 		delResp    *clientv3.DeleteResponse
