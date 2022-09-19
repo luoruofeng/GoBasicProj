@@ -26,6 +26,7 @@ func InitApiSever() error {
 	mux.HandleFunc("/tasks", handleGetAllTask)
 	mux.HandleFunc("/savetask", handleSaveTask)
 	mux.HandleFunc("/deltask", handleDelTask)
+	mux.HandleFunc("/test", handleTest)
 
 	s := http.Server{
 		Handler:      mux,
@@ -33,7 +34,7 @@ func InitApiSever() error {
 		WriteTimeout: time.Duration(c.Cnf.ServerWriteTimeout),
 	}
 
-	l, err := net.Listen("tcp", ":"+strconv.Itoa(c.Cnf.ServerPort))
+	listenr, err := net.Listen("tcp", ":"+strconv.Itoa(c.Cnf.ServerPort))
 	if err != nil {
 		return err
 	}
@@ -42,9 +43,17 @@ func InitApiSever() error {
 		HttpServer: s,
 	}
 
-	go s.Serve(l)
+	go s.Serve(listenr)
 	return nil
 
+}
+
+func handleTest(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		w.Write([]byte("test"))
+		return
+	}
 }
 
 func handleSaveTask(w http.ResponseWriter, r *http.Request) {
@@ -57,6 +66,7 @@ func handleSaveTask(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 		strtask := r.PostForm.Get("task")
+		log.Println(strtask)
 		var task *task_srv.Task
 		if err := json.Unmarshal([]byte(strtask), task); err != nil {
 			if bytes, err := common.BuildResponse(-1, err.Error(), nil); err == nil {
@@ -88,14 +98,20 @@ func handleGetAllTask(w http.ResponseWriter, r *http.Request) {
 	case http.MethodGet:
 		ts, err := e.EtcdTaskSrv.GetAllTask()
 		if err != nil {
-			log.Print("Getting all task failed!")
-			if bytes, err := common.BuildResponse(-1, err.Error(), nil); err == nil {
-				w.Write(bytes)
-				return
-			}
+			goto ERR
 		}
 		if bytes, err := common.BuildResponse(0, "success", ts); err == nil {
+			w.WriteHeader(http.StatusOK)
 			w.Write(bytes)
+		} else {
+			goto ERR
+		}
+		return
+	ERR:
+		if bytes, err := common.BuildResponse(-1, err.Error(), nil); err == nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			w.Write(bytes)
+			return
 		}
 	}
 }

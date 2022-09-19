@@ -3,10 +3,10 @@
     "server_port":8333,
 
     "API接口读超时": "单位是毫秒",
-    "server_read_timeout":5000,
+    "server_read_timeout":15000,
 
     "API接口写超时": "单位是毫秒",
-    "server_write_timeout":5000,
+    "server_write_timeout":15000,
 
     "web页面根目录": "静态页面，前后端分离开发",
     "server_web_root":"./static",

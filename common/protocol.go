@@ -20,7 +20,6 @@ func BuildResponse(errno int, msg string, data interface{}) (resp []byte, err er
 	response.Msg = msg
 	response.Data = data
 
-	// 2, 序列化json
 	resp, err = json.Marshal(response)
 	return
 }

@@ -7,11 +7,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/coreos/etcd/clientv3"
 	"github.com/coreos/etcd/mvcc/mvccpb"
 	"github.com/luoruofeng/gobasicproj/common"
 	c "github.com/luoruofeng/gobasicproj/master/config"
 	"github.com/luoruofeng/gobasicproj/master/task_srv"
-	"go.etcd.io/etcd/clientv3"
 )
 
 // 任务管理器
@@ -45,7 +45,17 @@ func InitEtcdTaskSrv() error {
 	if err != nil {
 		return err
 	} else {
-		log.Println("I have connected to ETCD")
+		log.Println("GEt ETCD client!")
+	}
+
+	//test connect
+	cxt, _ := context.WithTimeout(context.TODO(), 5*time.Second)
+	_, err = client.Get(cxt, "test_key")
+	if err != nil {
+		log.Println("connect to ETCD failed!")
+		return err
+	} else {
+		log.Println("etcd connect successfully!", c.Cnf.EtcdAddrs)
 	}
 
 	// 得到KV和Lease的API子集
@@ -59,6 +69,12 @@ func InitEtcdTaskSrv() error {
 		lease:  lease,
 	}
 	return nil
+}
+
+// 关闭连接
+func (t *TaskSrv) CloseTaskSrv() error {
+	log.Println("close etcd server connection!")
+	return t.client.Close()
 }
 
 // 保存任务
@@ -103,6 +119,7 @@ func (t *TaskSrv) GetAllTask() (allTask []*task_srv.Task, err error) {
 	if getResp, err = t.kv.Get(context.TODO(), common.TaskSaveDir, clientv3.WithPrefix()); err != nil {
 		return
 	}
+	log.Println(getResp)
 	allTask = make([]*task_srv.Task, 0)
 	for _, kvPair = range getResp.Kvs {
 		task = &task_srv.Task{}
@@ -112,6 +129,7 @@ func (t *TaskSrv) GetAllTask() (allTask []*task_srv.Task, err error) {
 		}
 		allTask = append(allTask, task)
 	}
+	log.Println(allTask)
 	return
 }
 
