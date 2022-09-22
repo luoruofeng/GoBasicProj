@@ -2,7 +2,7 @@ package master
 
 import (
 	"encoding/json"
-	"log"
+	"fmt"
 	"net"
 	"net/http"
 	"strconv"
@@ -26,12 +26,11 @@ func InitApiSever() error {
 	mux.HandleFunc("/tasks", handleGetAllTask)
 	mux.HandleFunc("/savetask", handleSaveTask)
 	mux.HandleFunc("/deltask", handleDelTask)
-	mux.HandleFunc("/test", handleTest)
 
 	s := http.Server{
 		Handler:      mux,
-		ReadTimeout:  time.Duration(c.Cnf.ServerReadTimeout),
-		WriteTimeout: time.Duration(c.Cnf.ServerWriteTimeout),
+		ReadTimeout:  time.Duration(c.Cnf.ServerReadTimeout * int(time.Millisecond)),
+		WriteTimeout: time.Duration(c.Cnf.ServerWriteTimeout * int(time.Millisecond)),
 	}
 
 	listenr, err := net.Listen("tcp", ":"+strconv.Itoa(c.Cnf.ServerPort))
@@ -48,40 +47,34 @@ func InitApiSever() error {
 
 }
 
-func handleTest(w http.ResponseWriter, r *http.Request) {
-	switch r.Method {
-	case http.MethodGet:
-		w.Write([]byte("test"))
-		return
-	}
-}
-
 func handleSaveTask(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodPost:
-		if err := r.ParseForm(); err != nil {
+		br := r.Body
+		defer br.Close()
+
+		var task task_srv.Task
+		d := json.NewDecoder(br)
+		err := d.Decode(&task)
+		if err != nil {
 			if bytes, err := common.BuildResponse(-1, err.Error(), nil); err == nil {
 				w.Write(bytes)
 				return
 			}
 		}
-		strtask := r.PostForm.Get("task")
-		log.Println(strtask)
-		var task *task_srv.Task
-		if err := json.Unmarshal([]byte(strtask), task); err != nil {
-			if bytes, err := common.BuildResponse(-1, err.Error(), nil); err == nil {
-				w.Write(bytes)
-				return
-			}
-		}
-		if o, err := e.EtcdTaskSrv.SaveTask(task); err != nil {
+
+		if o, err := e.EtcdTaskSrv.SaveTask(&task); err != nil {
 			if bytes, err := common.BuildResponse(-1, err.Error(), nil); err == nil {
 				w.Write(bytes)
 				return
 			}
 		} else {
 			if bytes, err := common.BuildResponse(0, "success", o); err == nil {
+				fmt.Println(string(bytes))
+
+				fmt.Println(3)
 				w.Write(bytes)
+				return
 			}
 		}
 	}

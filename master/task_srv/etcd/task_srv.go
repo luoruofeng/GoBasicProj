@@ -45,7 +45,7 @@ func InitEtcdTaskSrv() error {
 	if err != nil {
 		return err
 	} else {
-		log.Println("GEt ETCD client!")
+		log.Println("GEt ETCD client!", c.Cnf.EtcdAddrs)
 	}
 
 	//test connect
@@ -55,7 +55,7 @@ func InitEtcdTaskSrv() error {
 		log.Println("connect to ETCD failed!")
 		return err
 	} else {
-		log.Println("etcd connect successfully!", c.Cnf.EtcdAddrs)
+		log.Println("etcd connect successfully!")
 	}
 
 	// 得到KV和Lease的API子集
@@ -79,7 +79,7 @@ func (t *TaskSrv) CloseTaskSrv() error {
 
 // 保存任务
 func (t *TaskSrv) SaveTask(task *task_srv.Task) (oldTask *task_srv.Task, err error) {
-	// 把任务保存到/gobasicproj//任务id -> json
+	// 把任务保存到 / gobasicproj //任务id -> json
 	var (
 		taskKey    string
 		taskValue  []byte
