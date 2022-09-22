@@ -53,14 +53,4 @@ func TestEtcd(t *testing.T) {
 		}
 	})
 
-	// 删除任务
-	// t.Run("DeleteTask", func(t *testing.T) {
-	// 	o, err := EtcdTaskSrv.DeleteTask(task.Id)
-	// 	if err != nil {
-	// 		t.Fatalf("ETCD delete task failed! err:%v", err)
-	// 	} else {
-	// 		t.Log("ETCD delete task successfully! oldvalue:", o)
-	// 	}
-	// })
-
 }

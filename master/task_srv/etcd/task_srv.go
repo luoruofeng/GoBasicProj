@@ -3,6 +3,7 @@ package etcd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 	"time"
@@ -130,6 +131,36 @@ func (t *TaskSrv) GetAllTask() (allTask []*task_srv.Task, err error) {
 		allTask = append(allTask, task)
 	}
 	log.Println(allTask)
+	return
+}
+
+// 通过id获取任务
+func (t *TaskSrv) GetTaskById(taskId uint64) (rt *task_srv.Task, err error) {
+	var (
+		getResp *clientv3.GetResponse
+		kvPair  *mvccpb.KeyValue
+		task    *task_srv.Task
+	)
+
+	id := common.TaskSaveDir + strconv.FormatUint(taskId, 10)
+
+	if getResp, err = t.kv.Get(context.TODO(), id); err != nil {
+		return
+	}
+
+	if len(getResp.Kvs) <= 0 {
+		err = fmt.Errorf("id:%v is not exsits in ETCD", taskId)
+		return
+	}
+
+	kvPair = getResp.Kvs[0]
+	task = &task_srv.Task{}
+	if err = json.Unmarshal(kvPair.Value, task); err != nil {
+		return
+	}
+	rt = task
+
+	log.Println(rt)
 	return
 }
 
