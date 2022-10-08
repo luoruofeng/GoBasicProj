@@ -7,3 +7,5 @@ ETCD as message middleware. ETCD as data transfer proxy.
 
 Master send task to ETCD and worker watching task from ETCD.
 
+The project have not use etcd lock sync message. (if you want to use this project as your project mode. You should complete this part)
+
